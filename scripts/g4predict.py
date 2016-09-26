@@ -11,8 +11,6 @@ import argparse
 import subprocess
 import g4funcs as g4
 
-
-
 def parse_args():
     '''
     Get command line arguments
@@ -107,7 +105,7 @@ DNA/RNA strand). Uses the general pattern G{x}([ATGC]{y,z}G{x}){3}.
     
     inter_parser = sub.add_parser('inter', help='''
 Predict partial, intermolecular PG4s, which cannot form on there own but
-require at least 1 other partial G4 from a different DNA/RNA molecule.
+might form with at least 1 other partial G4 from a different DNA/RNA molecule.
 ''')
     inter_parser.set_defaults(func=inter)    
     
@@ -249,7 +247,7 @@ if __name__ == '__main__':
     if general_params['filter_overlapping'] or general_params['merge_overlapping']:
         
         # make temp bed file and write the sorted results to it
-        fd2, fn2 = mkstemp(suffix='_g4sort.bed.')
+        fd2, fn2 = mkstemp(suffix='_g4sort.bed')
         sorted_bed = os.fdopen(fd2)
         subprocess.call(['sort', '-k1,1', '-k2,2n', fn1],
                         stdout=sorted_bed)
