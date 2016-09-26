@@ -16,10 +16,3 @@ TO INSTALL:
     cd g4predict
     python setup.py build
     python setup.py install
-
-tested on:
-
-Scientific Linux release 6.8 (Carbon)
-Ubuntu 16.04.1 LTS (Xenial Xerus)
-
-(both using conda)
