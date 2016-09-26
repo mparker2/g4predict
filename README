@@ -1,0 +1,41 @@
+g4predict
+
+Predict putative G Quadruplexes using an extension of the Quadparser method
+
+Requirements:
+
+Linux (program calls sort behind the scenes)
+Python 3* (have not tested with Python 2.7 but it probably won't work!)
+
+It also requires these python modules:
+regex>=2016.3.2
+
+these should be installed automatically by setuptools
+
+TO INSTALL:
+
+I recommend using the conda package manager, it is really useful.
+I have also only tested installing the scripts using conda...
+
+Once you have conda installed, create a new environment by typing the following:
+
+    conda create -n <name-of-environment> python=3.5
+    source activate <name-of-environment>
+
+Now download the g4predict archive, then run:
+
+    tar xf g4predict.tar.gz
+    cd g4predict
+    python setup.py build
+    python setup.py install
+
+then to load the conda environment in future simply type:
+
+    source activate <name-of-environment>
+
+tested on:
+
+Scientific Linux release 6.8 (Carbon)
+Ubuntu 16.04.1 LTS (Xenial Xerus)
+
+(both using conda)
