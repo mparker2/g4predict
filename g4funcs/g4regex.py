@@ -19,7 +19,8 @@ PARAMETERS = dict(
     bulge_kwargs = dict(bulges_allowed = 0, start = 1, stop = 5),
     score_kwargs = dict(tetrad_score_factor = 20,
                         loop_pen_factor = 1.5,
-                        bulge_pen_factor = 5)
+                        bulge_pen_factor = 5),
+    inter_kwargs = dict(start = 2, stop = 3)
 )
 
 # REGEX BASES:
@@ -60,30 +61,38 @@ class G4Regex:
     be set to vary range of Quadruplexes which are predicted.
     '''
 
-    def __init__(self,
-                 tetrad_kwargs=None,
-                 loop_kwargs_list=None,
-                 bulge_kwargs=None,
-                 score_kwargs=None):
+    def __init__(self, **kwargs):
         
         # update parameters
-        if tetrad_kwargs is not None:
-            PARAMETERS['tetrad_kwargs'].update(tetrad_kwargs)
+        if kwargs.get('tetrad_kwargs', False):
+            PARAMETERS['tetrad_kwargs'].update(kwargs['tetrad_kwargs'])
 
-        if loop_kwargs_list is not None:
-            for i in range(3):
-                PARAMETERS['loop_kwargs'][i].update(loop_kwargs_list[i])
+        if kwargs.get('loop_kwargs_list', False):
+            #shorten default parameters
+            PARAMETERS['loop_kwargs'] = PARAMETERS['loop_kwargs'][
+                :len(kwargs['loop_kwargs_list'])]
+            for default, new in zip(PARAMETERS['loop_kwargs'],
+                                    kwargs['loop_kwargs_list']):
+                default.update(new)
 
-        if bulge_kwargs is not None:
-            PARAMETERS['bulge_kwargs'].update(bulge_kwargs)
+        if kwargs.get('bulge_kwargs', False):
+            PARAMETERS['bulge_kwargs'].update(kwargs['bulge_kwargs'])
         
-        if score_kwargs is not None:
-            PARAMETERS['score_kwargs'].update(score_kwargs)
+        if kwargs.get('score_kwargs', False):
+            PARAMETERS['score_kwargs'].update(kwargs['score_kwargs'])
+        
+        # kwargs for PartialG4Regex which inherits from this class
+        if kwargs.get('inter_kwargs', False):
+            PARAMETERS['inter_kwargs'].update(kwargs['inter_kwargs'])
         
         self._params = PARAMETERS        
         
         # self._regex stores generated regular expressions
         self._regex = defaultdict(list)
+        
+        self._build_g4_regex()
+
+    def _build_g4_regex(self):
         
         # generate separate regex for each strand (G4s on neg strand are still
         # matched using the pos strand as a guide)
@@ -91,9 +100,9 @@ class G4Regex:
             
             # make copies of kwargs so that modifications do not affect other
             # strand
-            loop_kwargs_c = deepcopy(PARAMETERS['loop_kwargs'])
-            tetrad_kwargs_c = copy(PARAMETERS['tetrad_kwargs'])
-            bulge_kwargs_c = copy(PARAMETERS['bulge_kwargs'])
+            loop_kwargs_c = deepcopy(self._params['loop_kwargs'])
+            tetrad_kwargs_c = copy(self._params['tetrad_kwargs'])
+            bulge_kwargs_c = copy(self._params['bulge_kwargs'])
             
             # reverse loops for opposite strand
             if strand == '-':
@@ -171,6 +180,7 @@ class G4Regex:
                     # add to ever increasing dict of regexes
                     self._regex[strand].append(''.join(g4_regex))
 
+
     def get_g4s_as_bed(self, seq, seq_id='unknown', use_bed12=True):
         '''
         query a sequence for G4s using G4Regex. Pass a seq_id to get fully
@@ -219,7 +229,7 @@ class G4Regex:
             match.span(x + 1) for x in range(len(match.groups()))][::2]
         start, end = match.span(0)
 
-        # use groupdict to count bulges and tetrads, to name the PG4
+        # use pattern to count bulges and tetrads, to name the PG4
         gd = match.groupdict()
         tetrads = [v for k, v in gd.items() if k.startswith('tet')]
 
@@ -246,14 +256,116 @@ class G4Regex:
             start, end, # thickStart/End the same as chromStart/End
             rgb, block_count, block_sizes, block_starts)
     
-    def _score_g4(self, l_tetrad, n_bulge, length):
+    def _score_g4(self, l_tetrad, n_bulge, length, n_tetrad=4):
         '''
         currently 'score' is just number of tetrads - total length of
         G4 loops and bulges, minus a gap penalty for bulges.
         '''
         score_params = self._params['score_kwargs']
         base_score = score_params['tetrad_score_factor'] * l_tetrad
-        loop_pen = score_params['loop_pen_factor'] * (length - l_tetrad * 4)
+        loop_pen = score_params['loop_pen_factor'] * (
+            length - l_tetrad * n_tetrad)
         bulge_pen = score_params['bulge_pen_factor'] * n_bulge
         
         return base_score - loop_pen - bulge_pen
+
+
+class PartialG4Regex(G4Regex):
+    
+    def _build_g4_regex(self):
+        
+        for base, strand in (('G', '+'), ('C', '-')):
+            # make copies of kwargs so that modifications do not affect other
+            # strand
+            loop_kwargs_c = deepcopy(self._params['loop_kwargs'])
+            tetrad_kwargs_c = copy(self._params['tetrad_kwargs'])
+            inter_kwargs_c = copy(self._params['inter_kwargs'])
+            
+            # reverse loops for opposite strand
+            if strand == '-':
+                loop_kwargs_c = loop_kwargs_c[::-1]            
+            
+            # generate loop regex
+            loop_regex = []
+            for i, kw in enumerate(loop_kwargs_c):
+                
+                # for each loop, check if G's are allowed.
+                allow_G = kw.pop('allow_G', True)
+                if allow_G:
+                    loop_regex.append(
+                        LOOP_BASE.format(n=i, **kw))
+                else:
+                    # We allow C in the loops, but not G
+                    allowed_base = 'C' if strand == '+' else 'G'
+                    loop_regex.append(
+                        LOOP_BASE_NO_G.format(n=i, b=allowed_base, **kw))
+            
+            # create individual regexes for each tetrad number
+            for t in range(tetrad_kwargs_c['start'],
+                           tetrad_kwargs_c['stop'] + 1):
+                tet_regex = TETRAD_BASE.format(base=base * t)
+                
+                g4_regex = ''
+                # create regex for range of partial G4s.
+                for i in range(inter_kwargs_c['stop']):
+                    g4_regex += tet_regex.format(n=i)
+                    
+                    if i in range(inter_kwargs_c['start'] - 1,
+                                  inter_kwargs_c['stop']):
+                        self._regex[strand].append(''.join(g4_regex))            
+    
+                    # append a loop after each tetrad
+                    try:
+                        g4_regex += loop_regex[i]
+                    except IndexError:
+                        # no loop after last tetrad
+                        break
+    
+    def _format_bed6(self, match, seq_id, strand):
+        '''
+        format a bed6 entry
+        '''
+
+        n_tetrad = match.pattern.count('tet')
+        
+        l_tetrad = len(match.group(1)) # length of each tetrad in bp
+        
+        start, end = match.span(0)        
+        name = 'PG4_{}t_{}'.format(l_tetrad, n_tetrad)        
+        score = self._score_g4(l_tetrad, 0, end - start, n_tetrad)
+        
+        # format the bed record
+        bed6 = '\t'.join(('{}',)*6)
+        return bed6.format(seq_id, start, end, name, score, strand) 
+    
+    def _format_bed12(self, match, seq_id, strand):
+        '''
+        format a bed12 entry        
+        '''
+        # tetrads are always first and last matched groups with only one
+        # other group between them: use [::2] to get their spans
+        tetrad_spans = [
+            match.span(x + 1) for x in range(len(match.groups()))][::2]
+        start, end = match.span(0)
+
+        n_tetrad = match.re.pattern.count('tet')
+        
+        l_tetrad = len(match.group(1)) # length of each tetrad in bp
+        
+        name = 'PG4_{}t_{}'.format(l_tetrad, n_tetrad)        
+        score = self._score_g4(l_tetrad, 0, end - start, n_tetrad)
+        rgb = '85,118,209' # nice blue colour...
+        
+        # positional info
+        # tetrads shown as blocks, loops+bulges as gaps
+        block_count = n_tetrad
+        block_sizes = ','.join(str(y - x) for x, y in tetrad_spans)
+        block_starts = ','.join(
+            str(x - start) for x, _ in tetrad_spans)
+        
+        # format the bed record
+        bed12 = '\t'.join(('{}',)*12)
+        return bed12.format(
+            seq_id, start, end, name, score, strand,
+            start, end, # thickStart/End the same as chromStart/End
+            rgb, block_count, block_sizes, block_starts)
