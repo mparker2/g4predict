@@ -2,6 +2,8 @@
 
 ### Predict putative G Quadruplexes using an extension of the Quadparser method
 
+![G Quadruplex Folding](./g4folding.gif)
+
 Requirements:
 
 * Linux (program calls sort behind the scenes)
