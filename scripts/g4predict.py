@@ -49,7 +49,8 @@ def parse_args():
             score_kwargs = dict(
                 tetrad_score_factor = args.pop('tetrad_score_factor'),
                 loop_pen_factor = args.pop('loop_pen_factor'),
-                bulge_pen_factor = args.pop('bulge_pen_factor'))
+                bulge_pen_factor = args.pop('bulge_pen_factor')),
+            soft_mask = args.pop('soft_mask')
             )
         
         return args, g4.G4Regex(**g4_params)
@@ -85,7 +86,8 @@ def parse_args():
                 stop = args.pop('max_g_runs')),
             score_kwargs = dict(
                 tetrad_score_factor = args.pop('tetrad_score_factor'),
-                loop_pen_factor = args.pop('loop_pen_factor'))
+                loop_pen_factor = args.pop('loop_pen_factor')),
+            soft_mask = args.pop('soft_mask')
             )
         
         return args, g4.PartialG4Regex(**g4_params)    
@@ -138,6 +140,13 @@ high scoring, non-overlapping PG4s
             help='''
 use merge method to flatten overlapping PG4s, output is in bed6 and overrides
 the --write-bed12 flag
+''')
+        general.add_argument(
+            '-c', '--soft-mask', action='store_true',
+            required=False, default=False,
+            help='''
+if input fasta contains soft masking (i.e. lower case nucleotides in repetitive
+or low complexity regions), switch on case sensitivity to ignore these regions
 ''')
 
         score = p.add_argument_group('Score', description='''

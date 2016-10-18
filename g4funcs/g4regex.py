@@ -20,7 +20,8 @@ PARAMETERS = dict(
     score_kwargs = dict(tetrad_score_factor = 20,
                         loop_pen_factor = 1.5,
                         bulge_pen_factor = 5),
-    inter_kwargs = dict(start = 2, stop = 3)
+    inter_kwargs = dict(start = 2, stop = 3),
+    soft_mask = False
 )
 
 # REGEX BASES:
@@ -85,6 +86,9 @@ class G4Regex:
         if kwargs.get('inter_kwargs', False):
             PARAMETERS['inter_kwargs'].update(kwargs['inter_kwargs'])
         
+        if kwargs.get('soft_mask', False):
+            PARAMETERS['soft_mask'] = True
+
         self._params = PARAMETERS        
         
         # self._regex stores generated regular expressions
@@ -188,9 +192,15 @@ class G4Regex:
         Predicted loops/tetrad positional information can be retained using
         bed12 format.
         '''
+        
+        # use case insensitive matching if soft masking is turned off.
+        if self._params['soft_mask']:
+            regex_flags = []
+        else:
+            regex_flags = [regex.IGNORECASE]
         for strand in '+-':
             for r in self._regex[strand]:
-                for m in regex.finditer(r, seq, overlapped=True):
+                for m in regex.finditer(r, seq, overlapped=True, *regex_flags):
                     if use_bed12 == True:
                         yield self._format_bed12(m, seq_id, strand)
                     else:
