@@ -2,7 +2,7 @@
 
 ### Predict putative G Quadruplexes using an extension of the Quadparser method
 
-![G Quadruplex Folding](./g4folding.gif =250x)
+<img src="./g4folding.gif" width="200">
 
 Requirements:
 
