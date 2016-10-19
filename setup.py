@@ -8,9 +8,11 @@ setup(
         'of the Quadparser method'
     ),
     author='Matthew Parker',
-    scripts=[
-        'scripts/g4predict.py'
-    ],
+    entry_points={
+        'console_scripts': [
+            'g4predict = g4funcs.g4predict:main'
+        ]
+    },
     packages=[
         'g4funcs',
     ],

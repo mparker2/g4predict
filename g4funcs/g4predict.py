@@ -231,7 +231,7 @@ or 1s to disallow G in specific loops
 
     return args.func(vars(args))
 
-if __name__ == '__main__':
+def main():
     general_params, g4regex = parse_args()
     fasta = g4.parse_fasta(general_params['fasta'])
 
@@ -290,3 +290,6 @@ if __name__ == '__main__':
         # clean up temp files
         os.remove(fn1)
         os.remove(fn2)
+
+if __name__ == '__main__':
+    sys.exit(main())
