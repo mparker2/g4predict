@@ -219,10 +219,10 @@ or 1s to disallow G in specific loops
         help='max runs of G to use to predict partial PG4s')
 
     args = a.parse_args()
-    if args.write_bed12 is args.write_bed6:
+    if not args.write_bed12 and not args.write_bed6:
+        args.write_bed12 = True # this is the default
+    elif args.write_bed12 and args.write_bed6:
         a.error('--write-bed12 and --write-bed6 are mutually exclusive')
-    elif args.write_bed6:
-        args.write_bed12 = False
 
     if args.filter_overlapping is args.merge_overlapping is True:
         a.error(
