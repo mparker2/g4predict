@@ -236,43 +236,43 @@ def main():
 
     # if we want to filter overlapping records, we need to write to file, then
     # sort the file before we do the filtering.
-    output_file = g4.BedWriter(fn=None)
-    for seq_id, seq in g4.parse_fasta(general_params['fasta']):
-        for record in g4_regex.get_g4s_as_bed(
-                seq,
-                seq_id=seq_id,
-                use_bed12=general_params['write_bed12']):
-            output_file.write(record)
-    output_file.close()
+    with g4.BedWriter() as output_file:
+        for seq_id, seq in g4.parse_fasta(general_params['fasta']):
+            for record in g4_regex.get_g4s_as_bed(
+                    seq, seq_id=seq_id,
+                    use_bed12=general_params['write_bed12']):
+                output_file.write(record)
     
     # make temp bed file and write the sorted results to it
     sorted_file_name = g4.sort_bed_file(output_file.fn)
+    os.remove(output_file.fn)
     
     if general_params['filter_overlapping'] or (
             general_params['merge_overlapping']):
 
         # reopen sorted bedfile and filter it:
-        filtered_output_file = choose_bed_or_bam(general_params)
-        with open(fn2) as inbed:
-            for cluster in g4.cluster_overlapping(inbed):
+        if general_params['filter_overlapping']:
+            filter_method = g4.filter_overlapping
+        elif general_params['merge_overlapping']:
+            filter_method = g4.merge_overlapping
 
-                # apply filter method...
-                if general_params['filter_overlapping']:
-                    records = g4.filter_overlapping(cluster)
-                    for record in records:
-                        record = '\t'.join([str(x) for x in record])
-                        outbed.write('{}\n'.format(record))
+        with open(sorted_file_name) as sorted_bed, g4.BedWriter() as filtered_output_file:
+            for record in g4.apply_filter_method(sorted_bed, filter_method):
+                filtered_output_file.write(bed)
+        
+        # remove sorted file from pre-filtering
+        os.remove(sorted_file_name)
 
-                # ...or merge method
-                elif general_params['merge_overlapping']:
-                    record = g4.merge_overlapping(cluster)
-                    record = '\t'.join([str(x) for x in record])
-                    outbed.write('{}\n'.format(record))
-        outbed.close()
-
-        # clean up temp files
-        os.remove(fn1)
-        os.remove(fn2)
+        # create new sorted file, post filtering
+        sorted_file_name = g4.sort_bed_file(filtered_output_file.fn)
+        os.remove(filtered_output_file.fn)
+    
+    # finally, open sorted file and write output (can't just move it because we want 
+    # the option of writing to stdout.
+    with (open(sorted_file_name) as f,
+          g4.BedWriter(general_params['bed']) as final_output):
+        for record in f:
+            final_output.write(record.strip())
 
 if __name__ == '__main__':
     sys.exit(main())

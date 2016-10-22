@@ -134,9 +134,8 @@ def merge_overlapping(cluster):
     return ['\t'.join([cluster[0][0], cluster_min, cluster_max,
                       'PG4_cluster', score, cluster[0][5]])]
 
-
-
-
-
-
+def apply_filter_method(file_handle, filter_method):
+    for cluster in cluster_overlapping(file_handle):
+        for record in filter_method(cluster):
+            yield record
 
