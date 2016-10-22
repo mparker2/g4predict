@@ -232,44 +232,27 @@ or 1s to disallow G in specific loops
     return args.func(vars(args))
 
 def main():
-    general_params, g4regex = parse_args()
-    fasta = g4.parse_fasta(general_params['fasta'])
+    general_params, g4_regex = parse_args()
 
     # if we want to filter overlapping records, we need to write to file, then
-    # sort the file before we do the filtering
-    if general_params['filter_overlapping'] or (
-            general_params['merge_overlapping']):
-        fd1, fn1 = mkstemp(suffix='_g4pred.bed')
-        bed = os.fdopen(fd1, 'w')
-    else:
-        if general_params['bed'] != '-':
-            bed = open(general_params['bed'], 'w')
-        else:
-            bed = sys.stdout
-
-    for seq_id, seq in fasta:
-        for record in g4regex.get_g4s_as_bed(
+    # sort the file before we do the filtering.
+    output_file = g4.BedWriter(fn=None)
+    for seq_id, seq in g4.parse_fasta(general_params['fasta']):
+        for record in g4_regex.get_g4s_as_bed(
                 seq,
                 seq_id=seq_id,
                 use_bed12=general_params['write_bed12']):
-            bed.write('{}\n'.format(record))
-    bed.close()
-
+            output_file.write(record)
+    output_file.close()
+    
+    # make temp bed file and write the sorted results to it
+    sorted_file_name = g4.sort_bed_file(output_file.fn)
+    
     if general_params['filter_overlapping'] or (
             general_params['merge_overlapping']):
 
-        # make temp bed file and write the sorted results to it
-        fd2, fn2 = mkstemp(suffix='_g4sort.bed')
-        sorted_bed = os.fdopen(fd2)
-        subprocess.call(['sort', '-k1,1', '-k2,2n', fn1],
-                        stdout=sorted_bed)
-        sorted_bed.close()
-
         # reopen sorted bedfile and filter it:
-        if general_params['bed'] != '-':
-            outbed = open(general_params['bed'], 'w')
-        else:
-            outbed = sys.stdout
+        filtered_output_file = choose_bed_or_bam(general_params)
         with open(fn2) as inbed:
             for cluster in g4.cluster_overlapping(inbed):
 

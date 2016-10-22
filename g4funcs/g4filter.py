@@ -118,7 +118,7 @@ def filter_overlapping(cluster):
             # try next record
             i -= 1
 
-    return incl_records
+    return ['\t'.join(r) for r in incl_records]
 
 
 def merge_overlapping(cluster):
@@ -131,5 +131,12 @@ def merge_overlapping(cluster):
     cluster_min = min(cluster, key=itemgetter(1))[1]
     cluster_max = max(cluster, key=itemgetter(2))[2]
     score = len(cluster)
-    return [cluster[0][0], cluster_min, cluster_max,
-            'PG4_cluster', score, cluster[0][5]]
+    return ['\t'.join([cluster[0][0], cluster_min, cluster_max,
+                      'PG4_cluster', score, cluster[0][5]])]
+
+
+
+
+
+
+
