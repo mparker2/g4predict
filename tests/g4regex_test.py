@@ -11,20 +11,14 @@ sys.path.append(
 import g4funcs as g4
 
 
-class TestG4Regex(unittest.TestCase):
+class TestG4RegexTetrads(unittest.TestCase):
 
     def setUp(self):
-        self.g4regex = g4.G4Regex(**self.params)
-
-
-class TestG4RegexTetrads(TestG4Regex):
-
-    def __init__(self):
-        super().__init__()
         self.params = dict(
             tetrad_kwargs=dict(start=2, stop=2),
             soft_mask=False
         )
+        self.g4regex = g4.G4Regex(**self.params)
 
     def test_correct_params(self):
         self.assertEqual(self.g4regex._params['tetrad_kwargs']['start'], 2)
@@ -82,16 +76,16 @@ class TestG4RegexTetrads(TestG4Regex):
         self.assertRaises(StopIteration, next(gen3))
 
 
-class TestG4RegexUnequalLoops(TestG4Regex):
+class TestG4RegexUnequalLoops(unittest.TestCase):
 
-    def __init__(self):
-        super().__init__()
+    def setUp(self):
         self.params = dict(
             loop_kwargs_list=[
                 dict(start=1, stop=x, allow_G=True) for x in [12, 7, 7]
             ],
             soft_mask=True
         )
+        self.g4regex = g4.G4Regex(**self.params)
 
     def test_correct_params(self):
         for i, stop in enumerate([7, 12, 7]):
@@ -148,13 +142,13 @@ class TestG4RegexUnequalLoops(TestG4Regex):
         self.assertRaises(StopIteration, next(gen3))
 
 
-class TestG4RegexBulges(TestG4Regex):
+class TestG4RegexBulges(unittest.TestCase):
 
-    def __init__(self):
-        super().__init__()
+    def setUp(self):
         self.params = dict(
             bulge_kwargs=dict(bulges_allowed=1, start=1, stop=5),
         )
+        self.g4regex = g4.G4Regex(**self.params)
 
     def test_correct_params(self):
         self.assertEqual(self.g4regex._params['bulge_kwargs']['start'], 1)
