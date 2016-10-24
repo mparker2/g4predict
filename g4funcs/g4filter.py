@@ -1,3 +1,9 @@
+'''
+Methods for filtering a set of overlapping bed records.
+
+author: Matthew Parker
+'''
+
 from operator import itemgetter
 from bisect import bisect_left
 
@@ -64,6 +70,9 @@ def cluster_overlapping(bed):
 
 
 def join_records(cluster):
+    '''
+    list of lists to list of tab delim strings
+    '''
     return ['\t'.join([str(f) for f in record]) for record in cluster]
 
 
@@ -139,6 +148,9 @@ def merge_overlapping(cluster):
 
 
 def apply_filter_method(file_handle, filter_method):
+    '''
+    Cluster overlapping records then apply merge or filter methods.
+    '''
     for cluster in cluster_overlapping(file_handle):
         for record in filter_method(cluster):
             yield record

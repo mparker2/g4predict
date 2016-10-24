@@ -1,7 +1,7 @@
 '''
 Predict putative G Quadruplexes using an extension of the Quadparser method;
-NB: Output from g4predict is unlikely to be correctly sorted. use unix sort.
-Author: Matthew Parker;
+
+author: Matthew Parker;
 '''
 
 import os
@@ -19,8 +19,8 @@ def parse_args():
 
     def intra(args):
         '''
-        parse inter args correctly and return G4Regex
-        instance and general_params
+        parse inter args correctly and return G4Regex instance and
+        general parameters
         '''
 
         log.info('Running in mode: intra')
@@ -60,8 +60,8 @@ def parse_args():
 
     def inter(args):
         '''
-        parse intra args correctly and return PartialG4Regex
-        instance and general_params
+        parse intra args correctly and return PartialG4Regex instance
+        and general parameters
         '''
 
         log.info('Running in mode: inter')
@@ -241,6 +241,9 @@ or 1s to disallow G in specific loops
 
 
 def main():
+    '''
+    run G4Predict.
+    '''
 
     log.basicConfig(stream=sys.stderr, level=log.INFO)
     log.info('Output from G4Predict')

@@ -1,3 +1,10 @@
+'''
+Functions for handling fasta/bed files
+
+author: Matthew Parker
+'''
+
+
 import os
 import sys
 import gzip
@@ -35,12 +42,12 @@ def parse_fasta(fasta):
 
 
 class BedWriter(object):
+    '''
+    get a writable bed file object, can be temporary file, stdout, or
+    specific file. Default is to make new temp file in /tmp/
+     '''
 
     def __init__(self, fn=None):
-        '''
-        get a writable bed file object, can be temporary file, stdout, or
-        specific file
-         '''
         if fn is None:
             fd, fn = mkstemp(suffix='.bed')
             self.file = os.fdopen(fd, 'w')
@@ -65,8 +72,7 @@ class BedWriter(object):
 
 def sort_bed_file(unsorted_fn):
     '''
-    make temp or output bed file and write the sorted results to it.
-    returns the name of the file containing sorted results.
+    sort a bed file using unix sort and yield sorted records in generator.
     '''
     s = subprocess.Popen(['sort', '-k1,1', '-k2,2n', unsorted_fn],
                          stdout=subprocess.PIPE)

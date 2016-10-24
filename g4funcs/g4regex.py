@@ -1,7 +1,8 @@
 '''
-G4Regex
+G4Regex: A set of classes for creating custom regular expressions to match
+putative G Quadruplexes.
 
-author:Matthew Parker
+author: Matthew Parker
 '''
 from collections import defaultdict
 from copy import copy, deepcopy
