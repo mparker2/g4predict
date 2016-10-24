@@ -6,9 +6,9 @@ Author: Matthew Parker;
 
 import os
 import sys
-from tempfile import mkstemp
+import logging as log
+from pprint import pformat
 import argparse
-import subprocess
 import g4funcs as g4
 
 
@@ -22,6 +22,8 @@ def parse_args():
         parse inter args correctly and return G4Regex
         instance and general_params
         '''
+
+        log.info('Running in mode: intra')
 
         # deal with loop arguments
         for l_arg in ('min_loop', 'max_loop', 'allow_g'):
@@ -61,6 +63,8 @@ def parse_args():
         parse intra args correctly and return PartialG4Regex
         instance and general_params
         '''
+
+        log.info('Running in mode: inter')
 
         # deal with loop arguments
         for l_arg in ('min_loop', 'max_loop', 'allow_g'):
@@ -110,6 +114,10 @@ Predict partial, intermolecular PG4s, which cannot form on there own but
 might form with at least 1 other partial G4 from a different DNA/RNA molecule.
 ''')
     inter_parser.set_defaults(func=inter)
+
+    if len(sys.argv) == 1:
+        a.print_help()
+        sys.exit(1)
 
     for p in (inter_parser, intra_parser):
         general = p.add_argument_group('General')
@@ -220,7 +228,7 @@ or 1s to disallow G in specific loops
 
     args = a.parse_args()
     if not args.write_bed12 and not args.write_bed6:
-        args.write_bed12 = True # this is the default
+        args.write_bed12 = True  # this is the default
     elif args.write_bed12 and args.write_bed6:
         a.error('--write-bed12 and --write-bed6 are mutually exclusive')
 
@@ -231,48 +239,64 @@ or 1s to disallow G in specific loops
 
     return args.func(vars(args))
 
+
 def main():
+
+    log.basicConfig(stream=sys.stderr, level=log.INFO)
+    log.info('Output from G4Predict')
+    log.info('Parsing command line arguments')
+
     general_params, g4_regex = parse_args()
+
+    log.info('Parameters:\n{}'.format(pformat(general_params, indent=8)))
+    log.info('G4 Parameters: \n{}'.format(pformat(g4_regex._params, indent=8)))
 
     # if we want to filter overlapping records, we need to write to file, then
     # sort the file before we do the filtering.
-    with g4.BedWriter() as output_file:
+    log.info('Predicting G4s')
+    with g4.BedWriter() as o1:
+        g4count = 0
         for seq_id, seq in g4.parse_fasta(general_params['fasta']):
             for record in g4_regex.get_g4s_as_bed(
                     seq, seq_id=seq_id,
                     use_bed12=general_params['write_bed12']):
-                output_file.write(record)
-    
-    # make temp bed file and write the sorted results to it
-    sorted_file_name = g4.sort_bed_file(output_file.fn)
-    os.remove(output_file.fn)
-    
+                o1.write(record)
+                g4count += 1
+    log.info('Predicted {} G4s'.format(g4count))
+
+    log.info('Sorting G4s...')
+    s = g4.sort_bed_file(o1.fn)
+
     if general_params['filter_overlapping'] or (
             general_params['merge_overlapping']):
 
         # reopen sorted bedfile and filter it:
         if general_params['filter_overlapping']:
+            log.info('Filtering overlapping G4s')
             filter_method = g4.filter_overlapping
         elif general_params['merge_overlapping']:
+            log.info('Merging overlapping G4s')
             filter_method = g4.merge_overlapping
 
-        with open(sorted_file_name) as sorted_bed, g4.BedWriter() as filtered_output_file:
-            for record in g4.apply_filter_method(sorted_bed, filter_method):
-                filtered_output_file.write(bed)
-        
-        # remove sorted file from pre-filtering
-        os.remove(sorted_file_name)
+        g4count = 0
+        with g4.BedWriter() as ff:
+            for record in g4.apply_filter_method(s, filter_method):
+                ff.write(record)
+                g4count += 1
+        log.info('{} G4s remaining after filter method'.format(g4count))
 
         # create new sorted file, post filtering
-        sorted_file_name = g4.sort_bed_file(filtered_output_file.fn)
-        os.remove(filtered_output_file.fn)
-    
-    # finally, open sorted file and write output (can't just move it because we want 
-    # the option of writing to stdout.
-    with (open(sorted_file_name) as f,
-          g4.BedWriter(general_params['bed']) as final_output):
-        for record in f:
-            final_output.write(record.strip())
+        log.info('Resorting G4s...')
+        s = g4.sort_bed_file(ff.fn)
+
+    with g4.BedWriter(general_params['bed']) as o2:
+        for record in s:
+            o2.write(record)
+
+    log.info('Complete. Cleaning up temporary files')
+    os.remove(o1.fn)
+
+    return 0
 
 if __name__ == '__main__':
     sys.exit(main())

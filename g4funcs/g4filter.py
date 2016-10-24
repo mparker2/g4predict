@@ -21,7 +21,6 @@ def cluster_overlapping(bed):
     cluster_chrom = {'+': None, '-': None}
     while True:
         record = next(bed).split()
-
         # break if EOF
         if not record:
             if cluster['+']:
@@ -64,6 +63,10 @@ def cluster_overlapping(bed):
             cluster_range[s] = [record[1], record[2]]
 
 
+def join_records(cluster):
+    return ['\t'.join([str(f) for f in record]) for record in cluster]
+
+
 def filter_overlapping(cluster):
     '''
     find the non-overlapping records in a cluster which yield
@@ -71,11 +74,11 @@ def filter_overlapping(cluster):
     '''
     # if cluster is only one record, return it
     if len(cluster) == 1:
-        return cluster
+        return join_records(cluster)
 
     # if cluster is only two records, return higher scoring
     if len(cluster) == 2:
-        return [max(cluster, key=itemgetter(4)), ]
+        return join_records([max(cluster, key=itemgetter(4)), ])
 
     # cluster is sorted by stop-values
     end_sorted_cluster = sorted(cluster, key=itemgetter(2))
@@ -118,7 +121,7 @@ def filter_overlapping(cluster):
             # try next record
             i -= 1
 
-    return ['\t'.join(r) for r in incl_records]
+    return join_records(incl_records)
 
 
 def merge_overlapping(cluster):
@@ -131,11 +134,11 @@ def merge_overlapping(cluster):
     cluster_min = min(cluster, key=itemgetter(1))[1]
     cluster_max = max(cluster, key=itemgetter(2))[2]
     score = len(cluster)
-    return ['\t'.join([cluster[0][0], cluster_min, cluster_max,
-                      'PG4_cluster', score, cluster[0][5]])]
+    return join_records([[cluster[0][0], cluster_min, cluster_max,
+                          'PG4_cluster', score, cluster[0][5]]])
+
 
 def apply_filter_method(file_handle, filter_method):
     for cluster in cluster_overlapping(file_handle):
         for record in filter_method(cluster):
             yield record
-
