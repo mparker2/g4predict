@@ -85,7 +85,7 @@ class TestG4RegexTetrads(TestG4Regex):
 class TestG4RegexUnequalLoops(TestG4Regex):
 
     def __init__(self):
-        super().__init()
+        super().__init__()
         self.params = dict(
             loop_kwargs_list=[
                 dict(start=1, stop=x, allow_G=True) for x in [12, 7, 7]
@@ -151,7 +151,7 @@ class TestG4RegexUnequalLoops(TestG4Regex):
 class TestG4RegexBulges(TestG4Regex):
 
     def __init__(self):
-        super().__init()
+        super().__init__()
         self.params = dict(
             bulge_kwargs=dict(bulges_allowed=1, start=1, stop=5),
         )
