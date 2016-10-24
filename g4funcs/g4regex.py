@@ -77,9 +77,8 @@ class G4Regex:
             # shorten default parameters
             PARAMETERS['loop_kwargs'] = PARAMETERS['loop_kwargs'][
                 :len(kwargs['loop_kwargs_list'])]
-            for default, new in zip(PARAMETERS['loop_kwargs'],
-                                    kwargs['loop_kwargs_list']):
-                default.update(new)
+            for i, new in enumerate(kwargs['loop_kwargs_list']):
+                PARAMETERS['loop_kwargs'][i].update(new)
 
         if kwargs.get('bulge_kwargs', False):
             PARAMETERS['bulge_kwargs'].update(kwargs['bulge_kwargs'])
@@ -95,6 +94,12 @@ class G4Regex:
             PARAMETERS['soft_mask'] = True
 
         self._params = PARAMETERS
+
+        # use case insensitive matching if soft masking is turned off.
+        if self._params['soft_mask']:
+            self._regex_flags = []
+        else:
+            self._regex_flags = [regex.IGNORECASE]
 
         # self._regex stores generated regular expressions
         self._regex = defaultdict(list)
@@ -197,14 +202,12 @@ class G4Regex:
         bed12 format.
         '''
 
-        # use case insensitive matching if soft masking is turned off.
-        if self._params['soft_mask']:
-            regex_flags = []
-        else:
-            regex_flags = [regex.IGNORECASE]
         for strand in '+-':
             for r in self._regex[strand]:
-                for m in regex.finditer(r, seq, overlapped=True, *regex_flags):
+                for m in regex.finditer(r,
+                                        seq,
+                                        overlapped=True,
+                                        *self._regex_flags):
                     if use_bed12:
                         yield self._format_bed12(m, seq_id, strand)
                     else:
