@@ -17,7 +17,7 @@ import regex
 
 PARAMETERS = dict(
     tetrad_kwargs=dict(start=3, stop=3),
-    loop_kwargs=[dict(start=1, stop=7, allow_G=True) for _ in range(3)],
+    loop_kwargs_list=[dict(start=1, stop=7, allow_G=True) for _ in range(3)],
     bulge_kwargs=dict(bulges_allowed=0, start=1, stop=5),
     score_kwargs=dict(tetrad_score_factor=20,
                       loop_pen_factor=1.5,
@@ -68,32 +68,31 @@ class G4Regex:
     '''
 
     def __init__(self, **kwargs):
+        self._params = deepcopy(PARAMETERS)
 
         # update parameters
         if kwargs.get('tetrad_kwargs', False):
-            PARAMETERS['tetrad_kwargs'].update(kwargs['tetrad_kwargs'])
+            self._params['tetrad_kwargs'].update(kwargs['tetrad_kwargs'])
 
         if kwargs.get('loop_kwargs_list', False):
             # shorten default parameters
-            PARAMETERS['loop_kwargs'] = PARAMETERS['loop_kwargs'][
-                :len(kwargs['loop_kwargs_list'])]
+            self._params['loop_kwargs_list'] = self._params[
+                'loop_kwargs_list'][:len(kwargs['loop_kwargs_list'])]
             for i, new in enumerate(kwargs['loop_kwargs_list']):
-                PARAMETERS['loop_kwargs'][i].update(new)
+                self._params['loop_kwargs_list'][i].update(new)
 
         if kwargs.get('bulge_kwargs', False):
-            PARAMETERS['bulge_kwargs'].update(kwargs['bulge_kwargs'])
+            self._params['bulge_kwargs'].update(kwargs['bulge_kwargs'])
 
         if kwargs.get('score_kwargs', False):
-            PARAMETERS['score_kwargs'].update(kwargs['score_kwargs'])
+            self._params['score_kwargs'].update(kwargs['score_kwargs'])
 
         # kwargs for PartialG4Regex which inherits from this class
         if kwargs.get('inter_kwargs', False):
-            PARAMETERS['inter_kwargs'].update(kwargs['inter_kwargs'])
+            self._params['inter_kwargs'].update(kwargs['inter_kwargs'])
 
         if kwargs.get('soft_mask', False):
-            PARAMETERS['soft_mask'] = True
-
-        self._params = PARAMETERS
+            self._params['soft_mask'] = True
 
         # use case insensitive matching if soft masking is turned off.
         if self._params['soft_mask']:
@@ -114,7 +113,7 @@ class G4Regex:
 
             # make copies of kwargs so that modifications do not affect other
             # strand
-            loop_kwargs_c = deepcopy(self._params['loop_kwargs'])
+            loop_kwargs_c = deepcopy(self._params['loop_kwargs_list'])
             tetrad_kwargs_c = copy(self._params['tetrad_kwargs'])
             bulge_kwargs_c = copy(self._params['bulge_kwargs'])
 
@@ -293,7 +292,7 @@ class PartialG4Regex(G4Regex):
         for base, strand in (('G', '+'), ('C', '-')):
             # make copies of kwargs so that modifications do not affect other
             # strand
-            loop_kwargs_c = deepcopy(self._params['loop_kwargs'])
+            loop_kwargs_c = deepcopy(self._params['loop_kwargs_list'])
             tetrad_kwargs_c = copy(self._params['tetrad_kwargs'])
             inter_kwargs_c = copy(self._params['inter_kwargs'])
 
