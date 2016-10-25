@@ -2,7 +2,6 @@ import sys
 import os
 import unittest
 import regex
-from copy import deepcopy
 
 sys.path.append(
     os.path.abspath(os.path.dirname(
@@ -14,7 +13,7 @@ import g4funcs as g4
 
 class TestG4Regex(object):
     '''
-    Some general tests for G4Regex classes.
+    Some general tests for the G4Regex class.
     '''
 
     def test_tetrad_params(self):

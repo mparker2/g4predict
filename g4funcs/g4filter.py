@@ -84,11 +84,9 @@ def filter_overlapping(cluster):
     # if cluster is only one record, return it
     if len(cluster) == 1:
         return join_records(cluster)
-
     # if cluster is only two records, return higher scoring
     if len(cluster) == 2:
         return join_records([max(cluster, key=itemgetter(4)), ])
-
     # cluster is sorted by stop-values
     end_sorted_cluster = sorted(cluster, key=itemgetter(2))
     end_sorted_vals = [x[2] for x in end_sorted_cluster]
@@ -104,27 +102,27 @@ def filter_overlapping(cluster):
         not_incl = max(max_of_cluster[i][:2])
 
         # find the closest non-overlapping record left of the current one
-        closest = bisect_left(end_sorted_vals, record[1]) - 1
+        closest = bisect_left(end_sorted_vals, record[1])
+        if closest == 0:
+            closest = -1
 
         # score including this record is total from closest plus current
         incl = max(max_of_cluster[closest][:2]) + record[4]
 
         # store scores and closest record in matrix
         max_of_cluster[i+1] = [not_incl, incl, closest]
-
     # backtrack through matrix to get high scoring records:
-    i = len(cluster) - 1
+    i = len(cluster)
     incl_records = []
     while i != -1:
-
         # if not_incl score is less than incl
-        if max_of_cluster[i+1][1] >= max_of_cluster[i+1][0]:
+        if max_of_cluster[i][1] >= max_of_cluster[i][0]:
 
             # include cluster[i]
-            incl_records.append(end_sorted_cluster[i])
+            incl_records.append(end_sorted_cluster[i-1])
 
             # jump to closest
-            i = max_of_cluster[i+1][2]
+            i = max_of_cluster[i][2]
         else:
 
             # try next record
