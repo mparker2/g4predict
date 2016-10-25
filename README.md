@@ -1,6 +1,6 @@
 ## g4predict
 
-### Predict putative G Quadruplexes using an extension of the Quadparser method
+### Putative G Quadruplex ( G4 ) prediction using an extension of the Quadparser method
 
 <img src="./g4folding.gif" width="300">
 
