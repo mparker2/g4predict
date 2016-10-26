@@ -26,9 +26,9 @@ def cluster_overlapping(bed):
     cluster_range = {'+': [0, 0], '-': [0, 0]}
     cluster_chrom = {'+': None, '-': None}
     while True:
-        record = next(bed).split()
-        # break if EOF
-        if not record:
+        try:
+            record = next(bed).split()
+        except StopIteration:
             if cluster['+']:
                 yield cluster['+']
             if cluster['-']:
