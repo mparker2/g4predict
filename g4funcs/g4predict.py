@@ -294,7 +294,12 @@ def main():
 
     with g4.BedWriter(general_params['bed']) as o2:
         for record in s:
-            o2.write(record)
+            try:
+                o2.write(record)
+            except IOError:
+                # this avoids BrokenPipeError or IOError when piping output to
+                # to head
+                break
 
     log.info('Complete. Cleaning up temporary files')
     os.remove(o1.fn)

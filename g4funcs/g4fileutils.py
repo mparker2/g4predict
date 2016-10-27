@@ -8,6 +8,7 @@ author: Matthew Parker
 import os
 import sys
 import gzip
+import signal
 import subprocess
 from tempfile import mkstemp
 from itertools import groupby
@@ -88,8 +89,13 @@ def sort_bed_file(unsorted_fn):
     '''
     sort a bed file using unix sort and yield sorted records in generator.
     '''
+    def default_sigpipe():
+        '''fixes some broken pipe behaviour'''
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
     s = subprocess.Popen(['sort', '-k1,1', '-k2,2n', unsorted_fn],
-                         stdout=subprocess.PIPE)
+                         stdout=subprocess.PIPE, preexec_fn=default_sigpipe)
+
     for record in s.stdout:
         yield record.decode().strip()
     s.stdout.close()
