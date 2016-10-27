@@ -257,9 +257,9 @@ def main():
     # if we want to filter overlapping records, we need to write to file, then
     # sort the file before we do the filtering.
     log.info('Predicting G4s')
-    with g4.BedWriter() as o1:
+    with g4.BedWriter() as o1, g4.FastaReader(general_params['fasta']) as f:
         g4count = 0
-        for seq_id, seq in g4.parse_fasta(general_params['fasta']):
+        for seq_id, seq in f.parse_fasta():
             for record in g4_regex.get_g4s_as_bed(
                     seq, seq_id=seq_id,
                     use_bed12=general_params['write_bed12']):

@@ -13,35 +13,58 @@ from tempfile import mkstemp
 from itertools import groupby
 
 
-def parse_fasta(fasta):
-    '''
-    Parse a fasta file and yield the seq_id and sequence of each record
-    '''
+class FileWrapper(object):
 
-    if fasta == '-':
-        f = sys.stdin
-        decode_method = str
-    elif os.path.splitext(fasta)[1] == '.gz':
-        f = gzip.open(fasta)
-        decode_method = bytes.decode
-    else:
-        f = open(fasta)
-        decode_method = str
+    def __enter__(self):
+        return self
 
-    def is_header(line):
-        return decode_method(line).startswith('>')
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.file.close()
 
-    fasta_it = groupby(f, is_header)
-    for h, group in fasta_it:
-        # take first word of fasta header as name, remove '>'
-        header = decode_method(next(group)).split()[0][1:]
-        _, seq_it = next(fasta_it)
-        seq = ''.join(decode_method(x).strip() for x in seq_it)
-        yield header, seq
-    f.close()
+    def close(self):
+        self.file.close()
 
 
-class BedWriter(object):
+class FastaReader(FileWrapper):
+
+    def __init__(self, fasta, decode_method=str):
+        if isinstance(fasta, str):
+            self._open_fasta(fasta)
+        else:
+            self.file = fasta
+            self.decode_method = decode_method
+
+    def parse_fasta(self):
+        d = self.decode_method
+
+        def is_header(line):
+            return d(line).startswith('>')
+
+        try:
+            fasta_it = groupby(self.file, is_header)
+        except TypeError:
+            raise IOError('Object passed to FastaReader is not iterable')
+
+        for h, group in fasta_it:
+            # take first word of fasta header as name, remove '>'
+            header = d(next(group)).split()[0][1:]
+            _, seq_it = next(fasta_it)
+            seq = ''.join(d(x).strip() for x in seq_it)
+            yield header, seq
+
+    def _open_fasta(self, fasta):
+        if fasta == '-':
+            self.file = sys.stdin
+            self.decode_method = str
+        elif os.path.splitext(fasta)[1] == '.gz':
+            self.file = gzip.open(fasta)
+            self.decode_method = bytes.decode
+        else:
+            self.file = open(fasta)
+            self.decode_method = str
+
+
+class BedWriter(FileWrapper):
     '''
     get a writable bed file object, can be temporary file, stdout, or
     specific file. Default is to make new temp file in /tmp/
@@ -56,15 +79,6 @@ class BedWriter(object):
         else:
             self.file = open(fn, 'w')
         self.fn = fn
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        self.file.close()
-
-    def close(self):
-        self.file.close()
 
     def write(self, bed_record):
         self.file.write('{}\n'.format(bed_record))
