@@ -92,3 +92,4 @@ def sort_bed_file(unsorted_fn):
                          stdout=subprocess.PIPE)
     for record in s.stdout:
         yield record.decode().strip()
+    s.stdout.close()

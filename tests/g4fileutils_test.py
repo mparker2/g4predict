@@ -54,3 +54,34 @@ GATAGCTATCTACTATATCATTAATATATT
             self.assertEqual(test_seq, parsed_seq)
         with self.assertRaises(StopIteration):
             next(fasta_iter)
+
+
+class TestSortBed(unittest.TestCase):
+
+    def setUp(self):
+        unsorted_bed = [
+            u'1\t100\t200\ttest\t10\t-',
+            u'1\t0\t100\ttest\t10\t+',
+            u'1\t150\t250\ttest\t10\t-',
+            u'2\t150\t250\ttest\t10\t-',
+            u'1\t120\t220\ttest\t10\t+',
+            u'1\t10\t110\ttest\t10\t-',
+            u'2\t120\t220\ttest\t10\t-',
+        ]
+        with g4.BedWriter() as bed:
+            for r in unsorted_bed:
+                bed.write(r)
+        self.unsorted_bed_fn = bed.fn
+        self.sorted_bed = [
+            u'1\t0\t100\ttest\t10\t+',
+            u'1\t10\t110\ttest\t10\t-',
+            u'1\t100\t200\ttest\t10\t-',
+            u'1\t120\t220\ttest\t10\t+',
+            u'1\t150\t250\ttest\t10\t-',
+            u'2\t120\t220\ttest\t10\t-',
+            u'2\t150\t250\ttest\t10\t-',
+        ]
+
+    def test_sort_bed(self):
+        sorted_output = list(g4.sort_bed_file(self.unsorted_bed_fn))
+        self.assertEqual(sorted_output, self.sorted_bed)
