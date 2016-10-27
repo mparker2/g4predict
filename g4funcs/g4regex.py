@@ -341,7 +341,7 @@ class PartialG4Regex(G4Regex):
         format a bed6 entry
         '''
 
-        n_tetrad = match.pattern.count('tet')
+        n_tetrad = match.re.pattern.count('tet')
 
         l_tetrad = len(match.group(1))  # length of each tetrad in bp
 

@@ -46,6 +46,13 @@ class TestG4Regex(object):
                 self.g4regex._params['bulge_kwargs']['bulges_allowed'],
                 self.test_params['bulge_kwargs']['bulges_allowed'])
 
+    def test_inter_params(self):
+        if self.test_params.get('inter_kwargs', False):
+            self.assertEqual(self.g4regex._params['inter_kwargs']['start'],
+                             self.test_params['inter_kwargs']['start'])
+            self.assertEqual(self.g4regex._params['inter_kwargs']['stop'],
+                             self.test_params['inter_kwargs']['stop'])
+
     def test_regex_production(self):
         self.assertIn(self.positive_strand_regex_example,
                       self.g4regex._regex['+'])
@@ -63,8 +70,8 @@ class TestG4Regex(object):
             self.assertListEqual(self.g4regex._regex_flags,
                                  [regex.IGNORECASE])
 
-    def test_matching(self):
-        for seq, match in self.patterns:
+    def test_matching_bed12(self):
+        for seq, match in self.patterns_bed12:
             bed_12_gen = self.g4regex.get_g4s_as_bed(
                 seq,
                 seq_id='test',
@@ -73,6 +80,19 @@ class TestG4Regex(object):
                 self.assertEqual(next(bed_12_gen), m)
             with self.assertRaises(StopIteration):
                 next(bed_12_gen)
+
+    def test_matching_bed6(self):
+        # output for bed6 matching should be exactly the same as bed12
+        # only without the last 6 fields
+        for seq, match in self.patterns_bed6:
+            bed_6_gen = self.g4regex.get_g4s_as_bed(
+                seq,
+                seq_id='test',
+                use_bed12=False)
+            for m in match:
+                self.assertEqual(next(bed_6_gen), m)
+            with self.assertRaises(StopIteration):
+                next(bed_6_gen)
 
 
 class TestG4RegexTwoTetrad(TestG4Regex, unittest.TestCase):
@@ -99,7 +119,7 @@ class TestG4RegexTwoTetrad(TestG4Regex, unittest.TestCase):
             '(?P<tet3>CC)'
         )
 
-        self.patterns = [
+        self.patterns_bed12 = [
             # first pattern should have one match
             ['AAGGACTGGATGGTTTGGTTT',
              ['test\t2\t18\tPG4_2t0b\t28.0\t+\t2\t'
@@ -111,6 +131,10 @@ class TestG4RegexTwoTetrad(TestG4Regex, unittest.TestCase):
             ['AAGGACTggatggtttggTTT',
              ['test\t2\t18\tPG4_2t0b\t28.0\t+\t2\t'
               '18\t85,118,209\t4\t2,2,2,2\t0,5,9,14']]
+        ]
+        self.patterns_bed6 = [
+            [seq, ['\t'.join(r.split()[:6]) for r in records]]
+            for seq, records in self.patterns_bed12
         ]
 
 
@@ -140,7 +164,7 @@ class TestG4RegexTwoOrThreeTetrad(TestG4Regex, unittest.TestCase):
             '(?P<tet3>CC)'
         )
 
-        self.patterns = [
+        self.patterns_bed12 = [
             # first pattern should have one match
             ['AAGGACTGGATGGTTTGGTTT',
              ['test\t2\t18\tPG4_2t0b\t28.0\t+\t2\t'
@@ -155,6 +179,10 @@ class TestG4RegexTwoOrThreeTetrad(TestG4Regex, unittest.TestCase):
 
               'test\t2\t22\tPG4_3t0b\t48.0\t+\t2\t'
               '22\t85,118,209\t4\t3,3,3,3\t0,6,11,17']]
+        ]
+        self.patterns_bed6 = [
+            [seq, ['\t'.join(r.split()[:6]) for r in records]]
+            for seq, records in self.patterns_bed12
         ]
 
 
@@ -181,7 +209,7 @@ class TestG4RegexUnequalLoopLengths(TestG4Regex, unittest.TestCase):
             '(?P<tet3>CCC)'
         )
 
-        self.patterns = [
+        self.patterns_bed12 = [
             # should have one match
             ['AAGGGACTAAAAAATGGGATGGGTTTGGGTTT',
              ['test\t2\t29\tPG4_3t0b\t37.5\t+\t2\t'
@@ -193,6 +221,10 @@ class TestG4RegexUnequalLoopLengths(TestG4Regex, unittest.TestCase):
             ['AACCCACTTCCCATCCCTTAAAAAATCCCTTT',
              ['test\t2\t29\tPG4_3t0b\t37.5\t-\t2\t'
               '29\t85,118,209\t4\t3,3,3,3\t0,7,12,24']]
+        ]
+        self.patterns_bed6 = [
+            [seq, ['\t'.join(r.split()[:6]) for r in records]]
+            for seq, records in self.patterns_bed12
         ]
 
 
@@ -222,7 +254,7 @@ class TestG4RegexOneBulge(TestG4Regex, unittest.TestCase):
             '(?P<btet3_2>C{1})'
         )
 
-        self.patterns = [
+        self.patterns_bed12 = [
             # first pattern should have one match
             ['AAGGAGACTTGGGATGGGTTTGGGTTT',
              ['test\t2\t24\tPG4_3t1b\t40.0\t+\t'
@@ -230,6 +262,10 @@ class TestG4RegexOneBulge(TestG4Regex, unittest.TestCase):
             # bulges with Cs in them are not allowed
             ['AAGGCAGACTTGGGATGGGTTTGGGTTT',
              []],
+        ]
+        self.patterns_bed6 = [
+            [seq, ['\t'.join(r.split()[:6]) for r in records]]
+            for seq, records in self.patterns_bed12
         ]
 
 
@@ -254,11 +290,62 @@ class TestG4RegexSoftMask(TestG4Regex, unittest.TestCase):
             '(?P<tet3>CCC)'
         )
 
-        self.patterns = [
+        self.patterns_bed12 = [
             # first pattern should have one match
             ['AAGGGACTGGGATGGGTTTGGGTTT',
              ['test\t2\t22\tPG4_3t0b\t48.0\t+\t2\t'
               '22\t85,118,209\t4\t3,3,3,3\t0,6,11,17']],
             ['AAGGGACTgggatgggtttgggTTT',
              []],
+        ]
+        self.patterns_bed6 = [
+            [seq, ['\t'.join(r.split()[:6]) for r in records]]
+            for seq, records in self.patterns_bed12
+        ]
+
+
+class TestG4RegexIntermolecular(TestG4Regex, unittest.TestCase):
+    '''
+    Test for PartialG4Regex class
+    '''
+
+    def setUp(self):
+        self.test_params = dict(
+            inter_kwargs=dict(start=2, stop=3)
+        )
+        self.g4regex = g4.PartialG4Regex(**self.test_params)
+        self.len_regex = 2
+        self.positive_strand_regex_example = (
+            '(?P<tet0>GGG)'
+            '(?P<loop0>[ACGT]{1,7}?)'
+            '(?P<tet1>GGG)'
+        )
+        self.negative_strand_regex_example = (
+            '(?P<tet0>CCC)'
+            '(?P<loop0>[ACGT]{1,7}?)'
+            '(?P<tet1>CCC)'
+            '(?P<loop1>[ACGT]{1,7}?)'
+            '(?P<tet2>CCC)'
+        )
+
+        self.patterns_bed12 = [
+            # first pattern should have one match
+            ['AAGGGACTGGGATGGTTT',
+             ['test\t2\t11\tPG4_3t_2\t55.5\t+\t2\t'
+              '11\t85,118,209\t2\t3,3\t0,6']],
+            # loops are too long here, should not match anything
+            ['AAGGGACAAATTTTGGGATGGTTT',
+             []],
+            # should match multiple overlapping
+            ['AAGGGACTGGGATGGGTTT',
+             ['test\t2\t11\tPG4_3t_2\t55.5\t+\t2\t'
+              '11\t85,118,209\t2\t3,3\t0,6',
+              'test\t8\t16\tPG4_3t_2\t57.0\t+\t8\t'
+              '16\t85,118,209\t2\t3,3\t0,5',
+              'test\t2\t16\tPG4_3t_3\t52.5\t+\t2\t'
+              '16\t85,118,209\t3\t3,3,3\t0,6,11']]
+        ]
+        self.patterns_bed6 = [
+            [seq, ['\t'.join(r.split()[:6]) for r in records]]
+            for seq, records in self.patterns_bed12
         ]
