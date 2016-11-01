@@ -131,7 +131,7 @@ might form with at least 1 other partial G4 from a different DNA/RNA molecule.
             help='Output bed file, use \'-\' to write to stdout')
         general.add_argument(
             '-t', '--write-bed12', action='store_true', required=False,
-            default=True,
+            default=False,
             help='write bed12 output')
         general.add_argument(
             '-s', '--write-bed6', action='store_true', required=False,

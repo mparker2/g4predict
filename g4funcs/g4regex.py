@@ -118,10 +118,6 @@ class G4Regex:
             tetrad_kwargs_c = copy(self._params['tetrad_kwargs'])
             bulge_kwargs_c = copy(self._params['bulge_kwargs'])
 
-            # reverse loops for opposite strand
-            if strand == '-':
-                loop_kwargs_c = loop_kwargs_c[::-1]
-
             # generate loop regex
             loop_regex = []
             for i, kw in enumerate(loop_kwargs_c):
@@ -136,6 +132,10 @@ class G4Regex:
                     allowed_base = 'C' if strand == '+' else 'G'
                     loop_regex.append(
                         LOOP_BASE_NO_G.format(n=i, b=allowed_base, **kw))
+
+            # reverse loops for opposite strand
+            if strand == '-':
+                loop_regex = loop_regex[::-1]
 
             # create individual regexes for each tetrad number
             # this is slower than backrefs when not allowing bulges,
@@ -225,12 +225,12 @@ class G4Regex:
         l_tetrad = len(tetrads[0])  # length of each tetrad in bp
 
         loops = [gd['loop{}'.format(x)] for x in (0, 1, 2)]
-        loops = ''.join(str(x) for x in loops)
+        loops = ','.join(str(len(x)) for x in loops)
 
         bulges = [k for k, v in gd.items() if k.startswith('btet')]
         bulge_pos = set(k[4] for k in bulges)
         n_bulges = len(bulge_pos)
-        bulge_flag = sum(2 ** f for f in bulge_pos)
+        bulge_flag = sum(2 ** int(f) for f in bulge_pos)
 
         start, end = match.span(0)
         name = '{}t{}b{}l'.format(l_tetrad, bulge_flag, loops)
@@ -256,12 +256,12 @@ class G4Regex:
         l_tetrad = len(tetrads[0])  # length of each tetrad in bp
 
         loops = [gd['loop{}'.format(x)] for x in (0, 1, 2)]
-        loops = ''.join(str(x) for x in loops)
+        loops = ','.join(str(len(x)) for x in loops)
 
         bulges = [k for k, v in gd.items() if k.startswith('btet')]
         bulge_pos = set(k[4] for k in bulges)
         n_bulges = len(bulge_pos)
-        bulge_flag = sum(2 ** f for f in bulge_pos)
+        bulge_flag = sum(2 ** int(f) for f in bulge_pos)
 
         start, end = match.span(0)
         name = '{}t{}b{}l'.format(l_tetrad, bulge_flag, loops)
@@ -306,10 +306,6 @@ class PartialG4Regex(G4Regex):
             tetrad_kwargs_c = copy(self._params['tetrad_kwargs'])
             inter_kwargs_c = copy(self._params['inter_kwargs'])
 
-            # reverse loops for opposite strand
-            if strand == '-':
-                loop_kwargs_c = loop_kwargs_c[::-1]
-
             # generate loop regex
             loop_regex = []
             for i, kw in enumerate(loop_kwargs_c):
@@ -330,6 +326,11 @@ class PartialG4Regex(G4Regex):
                            tetrad_kwargs_c['stop'] + 1):
                 tet_regex = TETRAD_BASE.format(base=base * t)
 
+                loop_regex_c = loop_regex[:t-1]
+                # reverse loops for opposite strand
+                if strand == '-':
+                    loop_regex_c = loop_regex_c[::-1]
+
                 g4_regex = ''
                 # create regex for range of partial G4s.
                 for i in range(inter_kwargs_c['stop']):
@@ -341,7 +342,7 @@ class PartialG4Regex(G4Regex):
 
                     # append a loop after each tetrad
                     try:
-                        g4_regex += loop_regex[i]
+                        g4_regex += loop_regex_c[i]
                     except IndexError:
                         # no loop after last tetrad
                         break

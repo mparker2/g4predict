@@ -113,23 +113,23 @@ class TestG4RegexTwoTetrad(TestG4Regex, unittest.TestCase):
             '(?P<tet3>GG)'
         )
         self.negative_strand_regex_example = (
-            '(?P<tet0>CC)(?P<loop0>[ACGT]{1,7}?)'
+            '(?P<tet0>CC)(?P<loop2>[ACGT]{1,7}?)'
             '(?P<tet1>CC)(?P<loop1>[ACGT]{1,7}?)'
-            '(?P<tet2>CC)(?P<loop2>[ACGT]{1,7}?)'
+            '(?P<tet2>CC)(?P<loop0>[ACGT]{1,7}?)'
             '(?P<tet3>CC)'
         )
 
         self.patterns_bed12 = [
             # first pattern should have one match
             ['AAGGACTGGATGGTTTGGTTT',
-             ['test\t2\t18\tPG4_2t0b\t28.0\t+\t2\t'
+             ['test\t2\t18\t2t0b3,2,3l\t28.0\t+\t2\t'
               '18\t85,118,209\t4\t2,2,2,2\t0,5,9,14']],
             # loops are too long here, should not match anything
             ['AAGGACTAAAAAATGGATGGTTTGGTTT',
              []],
             # soft mask is off, should still match
             ['AAGGACTggatggtttggTTT',
-             ['test\t2\t18\tPG4_2t0b\t28.0\t+\t2\t'
+             ['test\t2\t18\t2t0b3,2,3l\t28.0\t+\t2\t'
               '18\t85,118,209\t4\t2,2,2,2\t0,5,9,14']]
         ]
         self.patterns_bed6 = [
@@ -158,26 +158,26 @@ class TestG4RegexTwoOrThreeTetrad(TestG4Regex, unittest.TestCase):
         )
         # ...and two tetrad negative example
         self.negative_strand_regex_example = (
-            '(?P<tet0>CC)(?P<loop0>[ACGT]{1,7}?)'
+            '(?P<tet0>CC)(?P<loop2>[ACGT]{1,7}?)'
             '(?P<tet1>CC)(?P<loop1>[ACGT]{1,7}?)'
-            '(?P<tet2>CC)(?P<loop2>[ACGT]{1,7}?)'
+            '(?P<tet2>CC)(?P<loop0>[ACGT]{1,7}?)'
             '(?P<tet3>CC)'
         )
 
         self.patterns_bed12 = [
             # first pattern should have one match
             ['AAGGACTGGATGGTTTGGTTT',
-             ['test\t2\t18\tPG4_2t0b\t28.0\t+\t2\t'
+             ['test\t2\t18\t2t0b3,2,3l\t28.0\t+\t2\t'
               '18\t85,118,209\t4\t2,2,2,2\t0,5,9,14']],
             # matches one 3 tetrad and two 2 tetrad quadruplexes
             ['AAGGGACTGGGATGGGTTTGGGTTT',
-             ['test\t2\t21\tPG4_2t0b\t23.5\t+\t2\t'
+             ['test\t2\t21\t2t0b4,3,4l\t23.5\t+\t2\t'
               '21\t85,118,209\t4\t2,2,2,2\t0,6,11,17',
 
-              'test\t3\t21\tPG4_2t0b\t25.0\t+\t3\t'
+              'test\t3\t21\t2t0b3,3,4l\t25.0\t+\t3\t'
               '21\t85,118,209\t4\t2,2,2,2\t0,5,10,16',
 
-              'test\t2\t22\tPG4_3t0b\t48.0\t+\t2\t'
+              'test\t2\t22\t3t0b3,2,3l\t48.0\t+\t2\t'
               '22\t85,118,209\t4\t3,3,3,3\t0,6,11,17']]
         ]
         self.patterns_bed6 = [
@@ -203,23 +203,23 @@ class TestG4RegexUnequalLoopLengths(TestG4Regex, unittest.TestCase):
             '(?P<tet3>GGG)'
         )
         self.negative_strand_regex_example = (
-            '(?P<tet0>CCC)(?P<loop0>[ACGT]{1,7}?)'
+            '(?P<tet0>CCC)(?P<loop2>[ACGT]{1,7}?)'
             '(?P<tet1>CCC)(?P<loop1>[ACGT]{1,7}?)'
-            '(?P<tet2>CCC)(?P<loop2>[ACGT]{1,12}?)'
+            '(?P<tet2>CCC)(?P<loop0>[ACGT]{1,12}?)'
             '(?P<tet3>CCC)'
         )
 
         self.patterns_bed12 = [
             # should have one match
             ['AAGGGACTAAAAAATGGGATGGGTTTGGGTTT',
-             ['test\t2\t29\tPG4_3t0b\t37.5\t+\t2\t'
+             ['test\t2\t29\t3t0b10,2,3l\t37.5\t+\t2\t'
               '29\t85,118,209\t4\t3,3,3,3\t0,13,18,24']],
             # if loop 3 is long, should not match anything,
             ['AAGGGACTTGGGATGGGTTAAAAAATGGGTTT',
              []],
             # should match the same as pattern 1 but on the negative strand
             ['AACCCACTTCCCATCCCTTAAAAAATCCCTTT',
-             ['test\t2\t29\tPG4_3t0b\t37.5\t-\t2\t'
+             ['test\t2\t29\t3t0b9,2,4l\t37.5\t-\t2\t'
               '29\t85,118,209\t4\t3,3,3,3\t0,7,12,24']]
         ]
         self.patterns_bed6 = [
@@ -246,9 +246,9 @@ class TestG4RegexOneBulge(TestG4Regex, unittest.TestCase):
             '(?P<btet3_2>G{1})'
         )
         self.negative_strand_regex_example = (
-            '(?P<tet0>CCC)(?P<loop0>[ACGT]{1,7}?)'
+            '(?P<tet0>CCC)(?P<loop2>[ACGT]{1,7}?)'
             '(?P<tet1>CCC)(?P<loop1>[ACGT]{1,7}?)'
-            '(?P<tet2>CCC)(?P<loop2>[ACGT]{1,7}?)'
+            '(?P<tet2>CCC)(?P<loop0>[ACGT]{1,7}?)'
             '(?P<btet3_1>C{2})'
             '(?P<bul3>[AT]{1,5})'
             '(?P<btet3_2>C{1})'
@@ -257,7 +257,7 @@ class TestG4RegexOneBulge(TestG4Regex, unittest.TestCase):
         self.patterns_bed12 = [
             # first pattern should have one match
             ['AAGGAGACTTGGGATGGGTTTGGGTTT',
-             ['test\t2\t24\tPG4_3t1b\t40.0\t+\t'
+             ['test\t2\t24\t3t1b4,2,3l\t40.0\t+\t'
               '2\t24\t85,118,209\t5\t2,1,3,3,3\t0,3,8,13,19']],
             # bulges with Cs in them are not allowed
             ['AAGGCAGACTTGGGATGGGTTTGGGTTT',
@@ -284,16 +284,16 @@ class TestG4RegexSoftMask(TestG4Regex, unittest.TestCase):
             '(?P<tet3>GGG)'
         )
         self.negative_strand_regex_example = (
-            '(?P<tet0>CCC)(?P<loop0>[ACGT]{1,7}?)'
+            '(?P<tet0>CCC)(?P<loop2>[ACGT]{1,7}?)'
             '(?P<tet1>CCC)(?P<loop1>[ACGT]{1,7}?)'
-            '(?P<tet2>CCC)(?P<loop2>[ACGT]{1,7}?)'
+            '(?P<tet2>CCC)(?P<loop0>[ACGT]{1,7}?)'
             '(?P<tet3>CCC)'
         )
 
         self.patterns_bed12 = [
             # first pattern should have one match
             ['AAGGGACTGGGATGGGTTTGGGTTT',
-             ['test\t2\t22\tPG4_3t0b\t48.0\t+\t2\t'
+             ['test\t2\t22\t3t0b3,2,3l\t48.0\t+\t2\t'
               '22\t85,118,209\t4\t3,3,3,3\t0,6,11,17']],
             ['AAGGGACTgggatgggtttgggTTT',
              []],
@@ -322,9 +322,9 @@ class TestG4RegexIntermolecular(TestG4Regex, unittest.TestCase):
         )
         self.negative_strand_regex_example = (
             '(?P<tet0>CCC)'
-            '(?P<loop0>[ACGT]{1,7}?)'
-            '(?P<tet1>CCC)'
             '(?P<loop1>[ACGT]{1,7}?)'
+            '(?P<tet1>CCC)'
+            '(?P<loop0>[ACGT]{1,7}?)'
             '(?P<tet2>CCC)'
         )
 
