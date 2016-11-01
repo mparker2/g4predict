@@ -12,7 +12,7 @@ import argparse
 import g4funcs as g4
 
 
-def parse_args():
+def parse_args(argv=None):
     '''
     Get command line arguments
     '''
@@ -115,7 +115,9 @@ might form with at least 1 other partial G4 from a different DNA/RNA molecule.
 ''')
     inter_parser.set_defaults(func=inter)
 
-    if len(sys.argv) == 1:
+    if argv is None:
+        argv = sys.argv[1:]
+    if len(argv) == 1:
         a.print_help()
         sys.exit(1)
 
@@ -226,7 +228,7 @@ or 1s to disallow G in specific loops
         '-rmax', '--max-g-runs', type=int, required=False, default=3,
         help='max runs of G to use to predict partial PG4s')
 
-    args = a.parse_args()
+    args = a.parse_args(args=argv)
     if not args.write_bed12 and not args.write_bed6:
         args.write_bed12 = True  # this is the default
     elif args.write_bed12 and args.write_bed6:
@@ -240,7 +242,7 @@ or 1s to disallow G in specific loops
     return args.func(vars(args))
 
 
-def main():
+def main(args=None):
     '''
     run G4Predict.
     '''
@@ -249,7 +251,7 @@ def main():
     log.info('Output from G4Predict')
     log.info('Parsing command line arguments')
 
-    general_params, g4_regex = parse_args()
+    general_params, g4_regex = parse_args(args)
 
     log.info('Parameters:\n{}'.format(pformat(general_params, indent=8)))
     log.info('G4 Parameters: \n{}'.format(pformat(g4_regex._params, indent=8)))

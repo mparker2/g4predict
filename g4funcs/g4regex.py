@@ -7,6 +7,7 @@ author: Matthew Parker
 from collections import defaultdict
 from copy import copy, deepcopy
 from itertools import product
+from operator import itemgetter
 import regex
 
 # DEFAULT PARAMETERS:
@@ -221,14 +222,18 @@ class G4Regex:
         # use groupdict to count bulges and tetrads, to name the PG4
         gd = match.groupdict()
         tetrads = [v for k, v in gd.items() if k.startswith('tet')]
-
-        # number of bulged tetrads == 4 - number of tetrads
-        n_bulges = 4 - len(tetrads)
-
         l_tetrad = len(tetrads[0])  # length of each tetrad in bp
 
+        loops = [gd['loop{}'.format(x)] for x in (0, 1, 2)]
+        loops = ''.join(str(x) for x in loops)
+
+        bulges = [k for k, v in gd.items() if k.startswith('btet')]
+        bulge_pos = set(k[4] for k in bulges)
+        n_bulges = len(bulge_pos)
+        bulge_flag = sum(2 ** f for f in bulge_pos)
+
         start, end = match.span(0)
-        name = 'PG4_{}t{}b'.format(l_tetrad, n_bulges)
+        name = '{}t{}b{}l'.format(l_tetrad, bulge_flag, loops)
         score = self._score_g4(l_tetrad, n_bulges, end - start)
 
         # format the bed record
@@ -245,16 +250,21 @@ class G4Regex:
             match.span(x + 1) for x in range(len(match.groups()))][::2]
         start, end = match.span(0)
 
-        # use pattern to count bulges and tetrads, to name the PG4
+        # use groupdict to count bulges and tetrads, to name the PG4
         gd = match.groupdict()
         tetrads = [v for k, v in gd.items() if k.startswith('tet')]
-
-        # number of bulged tetrads == 4 - number of tetrads
-        n_bulges = 4 - len(tetrads)
-
         l_tetrad = len(tetrads[0])  # length of each tetrad in bp
 
-        name = 'PG4_{}t{}b'.format(l_tetrad, n_bulges)
+        loops = [gd['loop{}'.format(x)] for x in (0, 1, 2)]
+        loops = ''.join(str(x) for x in loops)
+
+        bulges = [k for k, v in gd.items() if k.startswith('btet')]
+        bulge_pos = set(k[4] for k in bulges)
+        n_bulges = len(bulge_pos)
+        bulge_flag = sum(2 ** f for f in bulge_pos)
+
+        start, end = match.span(0)
+        name = '{}t{}b{}l'.format(l_tetrad, bulge_flag, loops)
         score = self._score_g4(l_tetrad, n_bulges, end - start)
         rgb = '85,118,209'  # nice blue colour...
 
