@@ -117,7 +117,7 @@ might form with at least 1 other partial G4 from a different DNA/RNA molecule.
 
     if argv is None:
         argv = sys.argv[1:]
-    if len(argv) == 1:
+    if len(argv) <= 1:
         a.print_help()
         sys.exit(1)
 
